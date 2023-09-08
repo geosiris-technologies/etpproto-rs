@@ -100,6 +100,7 @@ dependencies = [
  "fmt",
  "regex",
  "serde",
+ "serde_json",
  "uuid 1.4.1",
 ]
 
