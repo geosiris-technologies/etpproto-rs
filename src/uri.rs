@@ -27,95 +27,92 @@ pub fn canonical_data_object_uris() -> String {
 }
 
 #[derive(Debug, PartialEq, Clone, serde::Deserialize, serde::Serialize)]
-pub struct Uri{
-	pub raw: String,
-	pub dataspace: Option<String>,
-	pub domain: Option<String>,
-	pub domain_version: Option<String>,
-	pub object_type: Option<String>,
-	pub object_uuid: Option<String>,
-	pub object_version: Option<String>,
-	pub collection_domain: Option<String>,
-	pub collection_domain_version: Option<String>,
-	pub collection_type: Option<String>,
-	pub sub_path: Option<String>,
-	pub query: Option<String>,
+pub struct Uri {
+    pub raw: String,
+    pub dataspace: Option<String>,
+    pub domain: Option<String>,
+    pub domain_version: Option<String>,
+    pub object_type: Option<String>,
+    pub object_uuid: Option<String>,
+    pub object_version: Option<String>,
+    pub collection_domain: Option<String>,
+    pub collection_domain_version: Option<String>,
+    pub collection_type: Option<String>,
+    pub sub_path: Option<String>,
+    pub query: Option<String>,
 }
 
-impl Uri{
-	pub fn parse(uri: &str) -> Uri{
-		let re = Regex::new(&canonical_data_object_uris()).unwrap();
-		let caps_uw = re.captures(uri);
-		match caps_uw{
-			Some(caps) => 
-				Uri{
-					raw: uri.to_string(),
-					dataspace: match caps.name("dataspace"){
-						Some(w) => Some(w.as_str().to_string()),
-						None => None
-					},
-					domain: match caps.name("domain"){
-						Some(w) => Some(w.as_str().to_string()),
-						None => None
-					},
-					domain_version: match caps.name("domainVersion"){
-						Some(w) => Some(w.as_str().to_string()),
-						None => None
-					},
-					object_type: match caps.name("objectType"){
-						Some(w) => Some(w.as_str().to_string()),
-						None => None
-					},
-					object_uuid: match caps.name("uuid"){
-						Some(w) => Some(w.as_str().to_string()),
-						None => match caps.name("uuid2"){
-							Some(w2) => Some(w2.as_str().to_string()),
-							None => None
-						}
-					},
-					object_version: match caps.name("version"){
-						Some(w) => Some(w.as_str().to_string()),
-						None => None
-					},
-					collection_domain: match caps.name("collectionDomain"){
-						Some(w) => Some(w.as_str().to_string()),
-						None => None
-					},
-					collection_domain_version: match caps.name("collectionDomainVersion"){
-						Some(w) => Some(w.as_str().to_string()),
-						None => None
-					},
-					collection_type: match caps.name("collectionType"){
-						Some(w) => Some(w.as_str().to_string()),
-						None => None
-					},
-					sub_path: match caps.name("subPath"){
-						Some(w) => Some(w.as_str().to_string()),
-						None => None
-					},
-					query: match caps.name("query"){
-						Some(w) => Some(w.as_str().to_string()),
-						None => None
-					},
-				},
-			None => 
-			Uri{
-				raw: uri.to_string(),
-				dataspace: None,
-				domain: None,
-				domain_version: None,
-				object_type: None,
-				object_uuid: None,
-				object_version: None,
-				collection_domain: None,
-				collection_domain_version: None,
-				collection_type: None,
-				sub_path: None,
-				query: None,
-			}
-		}
-		
-	}
+impl Uri {
+    pub fn parse(uri: &str) -> Uri {
+        let re = Regex::new(&canonical_data_object_uris()).unwrap();
+        let caps_uw = re.captures(uri);
+        match caps_uw {
+            Some(caps) => Uri {
+                raw: uri.to_string(),
+                dataspace: match caps.name("dataspace") {
+                    Some(w) => Some(w.as_str().to_string()),
+                    None => None,
+                },
+                domain: match caps.name("domain") {
+                    Some(w) => Some(w.as_str().to_string()),
+                    None => None,
+                },
+                domain_version: match caps.name("domainVersion") {
+                    Some(w) => Some(w.as_str().to_string()),
+                    None => None,
+                },
+                object_type: match caps.name("objectType") {
+                    Some(w) => Some(w.as_str().to_string()),
+                    None => None,
+                },
+                object_uuid: match caps.name("uuid") {
+                    Some(w) => Some(w.as_str().to_string()),
+                    None => match caps.name("uuid2") {
+                        Some(w2) => Some(w2.as_str().to_string()),
+                        None => None,
+                    },
+                },
+                object_version: match caps.name("version") {
+                    Some(w) => Some(w.as_str().to_string()),
+                    None => None,
+                },
+                collection_domain: match caps.name("collectionDomain") {
+                    Some(w) => Some(w.as_str().to_string()),
+                    None => None,
+                },
+                collection_domain_version: match caps.name("collectionDomainVersion") {
+                    Some(w) => Some(w.as_str().to_string()),
+                    None => None,
+                },
+                collection_type: match caps.name("collectionType") {
+                    Some(w) => Some(w.as_str().to_string()),
+                    None => None,
+                },
+                sub_path: match caps.name("subPath") {
+                    Some(w) => Some(w.as_str().to_string()),
+                    None => None,
+                },
+                query: match caps.name("query") {
+                    Some(w) => Some(w.as_str().to_string()),
+                    None => None,
+                },
+            },
+            None => Uri {
+                raw: uri.to_string(),
+                dataspace: None,
+                domain: None,
+                domain_version: None,
+                object_type: None,
+                object_uuid: None,
+                object_version: None,
+                collection_domain: None,
+                collection_domain_version: None,
+                collection_type: None,
+                sub_path: None,
+                query: None,
+            },
+        }
+    }
 }
 
 impl fmt::Display for Uri {
@@ -125,6 +122,6 @@ impl fmt::Display for Uri {
 }
 
 pub fn find_uuid(input: &str) -> &str {
-	let re = Regex::new(&uuid_regex()).unwrap();
-	re.find(input).unwrap().as_str()
+    let re = Regex::new(&uuid_regex()).unwrap();
+    re.find(input).unwrap().as_str()
 }

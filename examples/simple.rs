@@ -4,5 +4,5 @@
 use etpproto::uri::canonical_data_object_uris;
 
 fn main() {
-	println!("{:?}", canonical_data_object_uris())
+    println!("{:?}", canonical_data_object_uris())
 }
