@@ -7,7 +7,7 @@ on:
 name: Release Packaging
 
 env:
-  CODE_ROOT_DIR: gen/
+  CODE_ROOT_DIR: .
 #   PROJECT_NAME_UNDERSCORE: etptypes
     
 jobs:
