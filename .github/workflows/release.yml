@@ -1,0 +1,32 @@
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+name: Release Packaging
+
+env:
+  CODE_ROOT_DIR: gen/
+#   PROJECT_NAME_UNDERSCORE: etptypes
+    
+jobs:
+  release:
+    name: Release Packaging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: 'Release Build'
+        working-directory: ${{ env.CODE_ROOT_DIR }}
+        run: cargo build --release
+      - name: 'Upload Artifact'
+        uses: katyo/publish-crates@v2
+        with:
+          path: ${{ env.CODE_ROOT_DIR }}
+          # only real publish on push, not on pull-request
+          dry-run: ${{ github.event_name != 'push' }}
+          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}

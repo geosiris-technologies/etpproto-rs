@@ -1,0 +1,25 @@
+[package]
+edition = "2021"
+name = "etpproto"
+version = "1.0.0+1.2"
+authors = [
+	"Lionel Untereiner <lionel.untereiner@geosiris.com>", 
+    "Valentin Gauthier <valentin.gauthier@geosiris.com>"
+]
+categories = ["network-programming", "web-programming::websocket", "science"]
+description = "Energistics Transport Protocol (ETP) API"
+documentation = "https://github.com/geosiris-technologies/etpproto-rs/wiki"
+homepage = "https://github.com/geosiris-technologies/etpproto-rs"
+keywords = ["etp", "energistics"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/geosiris-technologies/etpproto-rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+etptypes = "1.0.0"
+fmt = "0.1.0"
+regex = "1.9.5"
+serde = { version = "1.0", features = ["derive"] }
+uuid = { version = "1.4.1", features = ["v4", "serde"]}
