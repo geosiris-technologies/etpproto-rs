@@ -3,7 +3,7 @@
 #![allow(dead_code)]
 
 use std::collections::HashMap;
-
+use std::str::FromStr;
 use etptypes::energistics::etp::v12::datatypes::data_value::DataValue;
 use etptypes::energistics::etp::v12::datatypes::data_value::UnionBooleanIntLongFloatDoubleStringArrayOfBooleanArrayOfNullableBooleanArrayOfIntArrayOfNullableIntArrayOfLongArrayOfNullableLongArrayOfFloatArrayOfDoubleArrayOfStringArrayOfBytesBytesAnySparseArray as U_TYPE;
 use etptypes::energistics::etp::v12::datatypes::endpoint_capability_kind::EndpointCapabilityKind;
@@ -12,57 +12,72 @@ pub fn negotiate_capabilities(
     ca: HashMap<String, DataValue>,
     cb: HashMap<String, DataValue>,
 ) -> HashMap<String, DataValue> {
-    let mut nego = HashMap::new();
+    let mut nego: HashMap<String, DataValue> = HashMap::new();
 
-    let caps_kinds_names: Vec<String> = vec![
-        format!("{}", EndpointCapabilityKind::active_timeout_period),
-        format!("{}", EndpointCapabilityKind::authorization_details),
-        format!("{}", EndpointCapabilityKind::change_propagation_period),
-        format!("{}", EndpointCapabilityKind::change_retention_period),
-        format!("{}", EndpointCapabilityKind::max_concurrent_multipart),
-        format!("{}", EndpointCapabilityKind::max_data_object_size),
-        format!("{}", EndpointCapabilityKind::max_part_size),
-        format!("{}", EndpointCapabilityKind::max_session_client_count),
-        format!("{}", EndpointCapabilityKind::max_session_global_count),
-        format!(
-            "{}",
-            EndpointCapabilityKind::max_web_socket_frame_payload_size
-        ),
-        format!(
-            "{}",
-            EndpointCapabilityKind::max_web_socket_message_payload_size
-        ),
-        format!(
-            "{}",
-            EndpointCapabilityKind::multipart_message_timeout_period
-        ),
-        format!("{}", EndpointCapabilityKind::response_timeout_period),
-        format!("{}", EndpointCapabilityKind::request_session_timeout_period),
-        format!(
-            "{}",
-            EndpointCapabilityKind::session_establishment_timeout_period
-        ),
-        format!(
-            "{}",
-            EndpointCapabilityKind::supports_alternate_request_uris
-        ),
-        format!(
-            "{}",
-            EndpointCapabilityKind::supports_message_header_extensions
-        ),
-    ];
+    let mut caps_kinds_names: Vec<String> = vec![];
+    for cap_kind in EndpointCapabilityKind::iter(){
+        caps_kinds_names.push( format!("{}", cap_kind));
+    }
 
     for (ca_key, ca_val) in &ca {
         if caps_kinds_names.iter().any(|e| ca_key.contains(e)) {
             for (cb_key, cb_val) in &cb {
                 if ca_key == cb_key {
-                    println!("NEGO {:?} - {:?}", ca_val, cb_val);
+                    let eck = EndpointCapabilityKind::from_str(ca_key).unwrap();
+                    let min_opt = eck.min();
+                    let max_opt = eck.max();
+
+                    match (ca_val.item.as_ref().unwrap(), cb_val.item.as_ref().unwrap(), ){
+                        (U_TYPE::Long(long_val_a), U_TYPE::Long(long_val_b)) => {
+                            let mut value = *std::cmp::min(long_val_a, long_val_b);
+                            if let Some(DataValue { item: dv }) = min_opt {
+                                if let Some(U_TYPE::Long(min_value)) = dv {
+                                    if  min_value > value{
+                                        value = min_value;
+                                    }
+                                }
+                            }
+                            if let Some(DataValue { item: dv }) = max_opt {
+                                if let Some(U_TYPE::Long(max_value)) = dv {
+                                    if  max_value < value{
+                                        value = max_value;
+                                    }
+                                }
+                            }
+                            nego.insert(format!("{}", eck), DataValue{item: Some(U_TYPE::Long(value))});
+                        },
+                        (U_TYPE::Boolean(bool_val_a), U_TYPE::Boolean(bool_val_b)) => {
+                            nego.insert(format!("{}", eck), DataValue{item: Some(U_TYPE::Boolean(*bool_val_a && *bool_val_b))});
+                        }
+                        _ => {
+                            println!("\tNego {:?}", ca_val.item.as_ref().unwrap());
+                        }
+                    }
                 }
             }
         } else {
             println!("Not in EndpointCapabilityKind {:?}", ca_key);
+            nego.insert(ca_key.to_string(), ca_val.clone());
         }
     }
+
+    // TODO: here "cb" may overrite "ca" value if contains a property not from EndpointCapabilityKind with same str value as in "ca"
+    for (cb_key, cb_val) in &ca {
+        if !caps_kinds_names.iter().any(|e| cb_key.contains(e)) {
+            nego.insert(cb_key.to_string(), cb_val.clone());
+        }
+    }
+
+    // Adding every properties that has a default value
+    for not_found in caps_kinds_names.into_iter().filter(|ckn| !nego.contains_key(ckn)).collect::<Vec<String>>(){
+        match EndpointCapabilityKind::from_str(&not_found).unwrap().default(){
+            Some(v) => {
+                nego.insert(not_found, v);
+            },
+            _ => {}
+        }
+    }
+
     nego
 }
 
@@ -81,32 +96,32 @@ trait DataValueProperties {
 impl DataValueProperties for EndpointCapabilityKind {
     fn default(&self) -> Option<DataValue> {
         match self {
-            EndpointCapabilityKind::active_timeout_period => Some(DataValue {
+            EndpointCapabilityKind::ActiveTimeoutPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(3600)),
             }),
-            // EndpointCapabilityKind::authorization_details => Some(DataValue{item: Some(U_TYPE::Long(1))}), // ArrayOfString
-            EndpointCapabilityKind::change_propagation_period => Some(DataValue {
+            // EndpointCapabilityKind::AuthorizationDetails => Some(DataValue{item: Some(U_TYPE::Long(1))}), // ArrayOfString
+            EndpointCapabilityKind::ChangePropagationPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(5)),
             }),
-            EndpointCapabilityKind::change_retention_period => Some(DataValue {
+            EndpointCapabilityKind::ChangeRetentionPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(86400)),
             }),
-            EndpointCapabilityKind::max_concurrent_multipart => Some(DataValue {
+            EndpointCapabilityKind::MaxConcurrentMultipart => Some(DataValue {
                 item: Some(U_TYPE::Long(1)),
             }),
-            EndpointCapabilityKind::response_timeout_period => Some(DataValue {
+            EndpointCapabilityKind::ResponseTimeoutPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(300)),
             }),
-            EndpointCapabilityKind::request_session_timeout_period => Some(DataValue {
+            EndpointCapabilityKind::RequestSessionTimeoutPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(45)),
             }),
-            EndpointCapabilityKind::session_establishment_timeout_period => Some(DataValue {
+            EndpointCapabilityKind::SessionEstablishmentTimeoutPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(3600)),
             }),
-            EndpointCapabilityKind::supports_alternate_request_uris => Some(DataValue {
+            EndpointCapabilityKind::SupportsAlternateRequestUris => Some(DataValue {
                 item: Some(U_TYPE::Boolean(false)),
             }),
-            EndpointCapabilityKind::supports_message_header_extensions => Some(DataValue {
+            EndpointCapabilityKind::SupportsMessageHeaderExtensions => Some(DataValue {
                 item: Some(U_TYPE::Boolean(false)),
             }),
             _ => None,
@@ -114,37 +129,37 @@ impl DataValueProperties for EndpointCapabilityKind {
     }
     fn min(&self) -> Option<DataValue> {
         match self {
-            EndpointCapabilityKind::active_timeout_period => Some(DataValue {
+            EndpointCapabilityKind::ActiveTimeoutPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(60)),
             }),
-            EndpointCapabilityKind::change_propagation_period => Some(DataValue {
+            EndpointCapabilityKind::ChangePropagationPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(1)),
             }),
-            EndpointCapabilityKind::change_retention_period => Some(DataValue {
+            EndpointCapabilityKind::ChangeRetentionPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(86400)),
             }),
-            EndpointCapabilityKind::max_concurrent_multipart => Some(DataValue {
+            EndpointCapabilityKind::MaxConcurrentMultipart => Some(DataValue {
                 item: Some(U_TYPE::Long(1)),
             }),
-            EndpointCapabilityKind::max_data_object_size => Some(DataValue {
+            EndpointCapabilityKind::MaxDataObjectSize => Some(DataValue {
                 item: Some(U_TYPE::Long(100000)),
             }),
-            EndpointCapabilityKind::max_part_size => Some(DataValue {
+            EndpointCapabilityKind::MaxPartSize => Some(DataValue {
                 item: Some(U_TYPE::Long(10000)),
             }),
-            EndpointCapabilityKind::max_session_client_count => Some(DataValue {
+            EndpointCapabilityKind::MaxSessionClientCount => Some(DataValue {
                 item: Some(U_TYPE::Long(2)),
             }),
-            EndpointCapabilityKind::max_session_global_count => Some(DataValue {
+            EndpointCapabilityKind::MaxSessionGlobalCount => Some(DataValue {
                 item: Some(U_TYPE::Long(2)),
             }),
-            EndpointCapabilityKind::response_timeout_period => Some(DataValue {
+            EndpointCapabilityKind::ResponseTimeoutPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(60)),
             }),
-            EndpointCapabilityKind::request_session_timeout_period => Some(DataValue {
+            EndpointCapabilityKind::RequestSessionTimeoutPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(5)),
             }),
-            EndpointCapabilityKind::session_establishment_timeout_period => Some(DataValue {
+            EndpointCapabilityKind::SessionEstablishmentTimeoutPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(60)),
             }),
             _ => None,
@@ -152,10 +167,10 @@ impl DataValueProperties for EndpointCapabilityKind {
     }
     fn max(&self) -> Option<DataValue> {
         match self {
-            EndpointCapabilityKind::change_propagation_period => Some(DataValue {
+            EndpointCapabilityKind::ChangePropagationPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(600)),
             }),
-            EndpointCapabilityKind::multipart_message_timeout_period => Some(DataValue {
+            EndpointCapabilityKind::MultipartMessageTimeoutPeriod => Some(DataValue {
                 item: Some(U_TYPE::Long(60)),
             }),
             _ => None,

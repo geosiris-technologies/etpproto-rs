@@ -18,7 +18,8 @@ repository = "https://github.com/geosiris-technologies/etpproto-rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-etptypes = "1.0.0"
+# etptypes = "1.0.0"
+etptypes = { git = "https://github.com/geosiris-technologies/etptypes-rs/", branch = "avro-serialization"}
 fmt = "0.1.0"
 regex = "1.9.5"
 serde = { version = "1.0", features = ["derive"] }

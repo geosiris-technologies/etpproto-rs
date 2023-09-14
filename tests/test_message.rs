@@ -9,6 +9,8 @@ fn test_message_flags_0() {
         msg_compressed: false,
         msg_aknowledge: false,
         msg_has_header_extension: false,
+        msg_multipart: false,
+        msg_no_data: false
     };
 
     assert_eq!(full_0, full_0);
@@ -24,6 +26,8 @@ fn test_message_flags_0_parse() {
         msg_final: false,
         msg_compressed: false,
         msg_aknowledge: false,
+        msg_multipart: false,
+        msg_no_data: false,
         msg_has_header_extension: false,
     };
     assert_eq!(full_0, MessageHeaderFlag::parse(full_0.as_i32()));
@@ -36,6 +40,8 @@ fn test_message_flags_1() {
         msg_compressed: true,
         msg_aknowledge: true,
         msg_has_header_extension: true,
+        msg_multipart: false,
+        msg_no_data: false
     };
 
     assert_eq!(full_1, full_1);
@@ -55,6 +61,8 @@ fn test_message_flags_1_parse() {
         msg_compressed: true,
         msg_aknowledge: true,
         msg_has_header_extension: true,
+        msg_multipart: false,
+        msg_no_data: false
     };
     assert_eq!(full_1, MessageHeaderFlag::parse(full_1.as_i32()));
 }
@@ -65,6 +73,8 @@ fn test_message_flags_mix_as_int32() {
         msg_final: true,
         msg_compressed: false,
         msg_aknowledge: true,
+        msg_multipart: false,
+        msg_no_data: false,
         msg_has_header_extension: false,
     };
     let int_rep = full_1.as_i32();
@@ -82,6 +92,8 @@ fn test_message_flags_mix_parse() {
         msg_compressed: false,
         msg_aknowledge: true,
         msg_has_header_extension: false,
+        msg_multipart: false,
+        msg_no_data: false
     };
     let int_rep = full_1.as_i32();
     let full_1_parsed: MessageHeaderFlag = MessageHeaderFlag::parse(int_rep);
