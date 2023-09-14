@@ -3,63 +3,58 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
-use etptypes::helpers::Schemable;
+use etpproto::message::*;
 use etptypes::energistics::etp::v12::datatypes::message_header::MessageHeader;
-use etptypes::energistics::etp::v12::protocol::core::request_session::RequestSession;
-use std::time::SystemTime;
+use etptypes::energistics::etp::v12::datatypes::protocol::Protocol;
 use etptypes::energistics::etp::v12::datatypes::supported_protocol::SupportedProtocol;
 use etptypes::energistics::etp::v12::datatypes::uuid::random_uuid;
-use etptypes::helpers::time_to_etp;
-use etptypes::energistics::etp::v12::datatypes::protocol::Protocol;
-use etptypes::helpers::ETP12VERSION;
-use std::collections::HashMap;
 use etptypes::energistics::etp::v12::protocol::core::ping::Ping;
-use etptypes::protocols::ProtocolMessage;
 use etptypes::energistics::etp::v12::protocol::core::pong::Pong;
-use etpproto::message::*;
-
+use etptypes::energistics::etp::v12::protocol::core::request_session::RequestSession;
+use etptypes::helpers::time_to_etp;
+use etptypes::helpers::Schemable;
+use etptypes::helpers::ETP12VERSION;
+use etptypes::protocols::ProtocolMessage;
+use std::collections::HashMap;
+use std::time::SystemTime;
 
 /* HANDLER */
-struct MyHandler{}
+struct MyHandler {}
 
-impl EtpMessageHandler<Ping> for MyHandler{
-    fn handle(header: MessageHeaderFlag, msg: Ping) -> Option<Vec<ProtocolMessage>>{
-        Some(
-            vec!(ProtocolMessage::Core_Pong(Pong::default()))
-            )
+impl EtpMessageHandler<Ping> for MyHandler {
+    fn handle(header: MessageHeaderFlag, msg: Ping) -> Option<Vec<ProtocolMessage>> {
+        Some(vec![ProtocolMessage::Core_Pong(Pong::default())])
     }
 }
 
-impl EtpMessageHandler<Pong> for MyHandler{
-    fn handle(header: MessageHeaderFlag, msg: Pong) -> Option<Vec<ProtocolMessage>>{
-        Some(
-            vec!(ProtocolMessage::Core_Pong(Pong::default()))
-            )
+impl EtpMessageHandler<Pong> for MyHandler {
+    fn handle(header: MessageHeaderFlag, msg: Pong) -> Option<Vec<ProtocolMessage>> {
+        Some(vec![ProtocolMessage::Core_Pong(Pong::default())])
     }
 }
 
 /* OBJECTS */
 
-fn get_request_session() -> RequestSession{
+fn get_request_session() -> RequestSession {
     let protocols: Vec<SupportedProtocol> = vec![
-    SupportedProtocol {
-        protocol: Protocol::Core as i32,
-        protocol_version: ETP12VERSION,
-        role: "Server".to_string(),
-        protocol_capabilities: HashMap::new(),
-    },
-    SupportedProtocol {
-        protocol: 3,
-        protocol_version: ETP12VERSION,
-        role: "Server".to_string(),
-        protocol_capabilities: HashMap::new(),
-    },
-    SupportedProtocol {
-        protocol: 4,
-        protocol_version: ETP12VERSION,
-        role: "Server".to_string(),
-        protocol_capabilities: HashMap::new(),
-    },
+        SupportedProtocol {
+            protocol: Protocol::Core as i32,
+            protocol_version: ETP12VERSION,
+            role: "Server".to_string(),
+            protocol_capabilities: HashMap::new(),
+        },
+        SupportedProtocol {
+            protocol: 3,
+            protocol_version: ETP12VERSION,
+            role: "Server".to_string(),
+            protocol_capabilities: HashMap::new(),
+        },
+        SupportedProtocol {
+            protocol: 4,
+            protocol_version: ETP12VERSION,
+            role: "Server".to_string(),
+            protocol_capabilities: HashMap::new(),
+        },
     ];
 
     let now: SystemTime = SystemTime::now();
@@ -106,5 +101,8 @@ fn test_avro_serialization_() {
     let record = record_a.unwrap();
     let mut record_slice = record.as_slice();
 
-    assert_eq!(req_sess, RequestSession::avro_deserialize(&mut record_slice).unwrap())
+    assert_eq!(
+        req_sess,
+        RequestSession::avro_deserialize(&mut record_slice).unwrap()
+    )
 }

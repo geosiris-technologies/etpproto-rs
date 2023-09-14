@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 #![allow(dead_code)]
 
-use std::collections::HashMap;
-use std::str::FromStr;
 use etptypes::energistics::etp::v12::datatypes::data_value::DataValue;
 use etptypes::energistics::etp::v12::datatypes::data_value::UnionBooleanIntLongFloatDoubleStringArrayOfBooleanArrayOfNullableBooleanArrayOfIntArrayOfNullableIntArrayOfLongArrayOfNullableLongArrayOfFloatArrayOfDoubleArrayOfStringArrayOfBytesBytesAnySparseArray as U_TYPE;
 use etptypes::energistics::etp::v12::datatypes::endpoint_capability_kind::EndpointCapabilityKind;
+use std::collections::HashMap;
+use std::str::FromStr;
 
 pub fn negotiate_capabilities(
     ca: HashMap<String, DataValue>,
@@ -15,8 +15,8 @@ pub fn negotiate_capabilities(
     let mut nego: HashMap<String, DataValue> = HashMap::new();
 
     let mut caps_kinds_names: Vec<String> = vec![];
-    for cap_kind in EndpointCapabilityKind::iter(){
-        caps_kinds_names.push( format!("{}", cap_kind));
+    for cap_kind in EndpointCapabilityKind::iter() {
+        caps_kinds_names.push(format!("{}", cap_kind));
     }
 
     for (ca_key, ca_val) in &ca {
@@ -27,27 +27,37 @@ pub fn negotiate_capabilities(
                     let min_opt = eck.min();
                     let max_opt = eck.max();
 
-                    match (ca_val.item.as_ref().unwrap(), cb_val.item.as_ref().unwrap(), ){
+                    match (ca_val.item.as_ref().unwrap(), cb_val.item.as_ref().unwrap()) {
                         (U_TYPE::Long(long_val_a), U_TYPE::Long(long_val_b)) => {
                             let mut value = *std::cmp::min(long_val_a, long_val_b);
                             if let Some(DataValue { item: dv }) = min_opt {
                                 if let Some(U_TYPE::Long(min_value)) = dv {
-                                    if  min_value > value{
+                                    if min_value > value {
                                         value = min_value;
                                     }
                                 }
                             }
                             if let Some(DataValue { item: dv }) = max_opt {
                                 if let Some(U_TYPE::Long(max_value)) = dv {
-                                    if  max_value < value{
+                                    if max_value < value {
                                         value = max_value;
                                     }
                                 }
                             }
-                            nego.insert(format!("{}", eck), DataValue{item: Some(U_TYPE::Long(value))});
-                        },
+                            nego.insert(
+                                format!("{}", eck),
+                                DataValue {
+                                    item: Some(U_TYPE::Long(value)),
+                                },
+                            );
+                        }
                         (U_TYPE::Boolean(bool_val_a), U_TYPE::Boolean(bool_val_b)) => {
-                            nego.insert(format!("{}", eck), DataValue{item: Some(U_TYPE::Boolean(*bool_val_a && *bool_val_b))});
+                            nego.insert(
+                                format!("{}", eck),
+                                DataValue {
+                                    item: Some(U_TYPE::Boolean(*bool_val_a && *bool_val_b)),
+                                },
+                            );
                         }
                         _ => {
                             println!("\tNego {:?}", ca_val.item.as_ref().unwrap());
@@ -69,11 +79,18 @@ pub fn negotiate_capabilities(
     }
 
     // Adding every properties that has a default value
-    for not_found in caps_kinds_names.into_iter().filter(|ckn| !nego.contains_key(ckn)).collect::<Vec<String>>(){
-        match EndpointCapabilityKind::from_str(&not_found).unwrap().default(){
+    for not_found in caps_kinds_names
+        .into_iter()
+        .filter(|ckn| !nego.contains_key(ckn))
+        .collect::<Vec<String>>()
+    {
+        match EndpointCapabilityKind::from_str(&not_found)
+            .unwrap()
+            .default()
+        {
             Some(v) => {
                 nego.insert(not_found, v);
-            },
+            }
             _ => {}
         }
     }

@@ -5,14 +5,12 @@
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 
-use etptypes::energistics::etp::v12::protocol::core::protocol_exception::ProtocolException;
-use etptypes::error::eunsupported_protocol;
-use etptypes::protocols::ProtocolMessage;
-use etptypes::helpers::ETPMetadata;
 use etptypes::energistics::etp::v12::datatypes::message_header::MessageHeader;
 use etptypes::energistics::etp::v12::datatypes::message_header_extension::MessageHeaderExtension;
-
-
+use etptypes::energistics::etp::v12::protocol::core::protocol_exception::ProtocolException;
+use etptypes::error::eunsupported_protocol;
+use etptypes::helpers::ETPMetadata;
+use etptypes::protocols::ProtocolMessage;
 
 pub const MSG_FLAG_NONE: i32 = 0x00;
 pub const MSG_FLAG_MULTIPART: i32 = 0x01;
@@ -89,7 +87,6 @@ impl MessageHeaderFlag {
     }
 }
 
-
 #[derive(Debug, PartialEq, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Message<T> {
     header: MessageHeader,
@@ -97,27 +94,24 @@ pub struct Message<T> {
     body: T,
 }
 
-impl<T> Message<T>{
+impl<T> Message<T> {
     /*pub fn encode(&self) -> Option<Vec<8>>{
         None
     }*/
 
-    fn correlation_id(&self) -> i64{
+    fn correlation_id(&self) -> i64 {
         if self.header.correlation_id != 0 {
             self.header.correlation_id
-        }else{
+        } else {
             self.header.message_id
         }
     }
 }
 
-
-pub trait EtpMessageHandler<T: ETPMetadata>{
-    fn handle(header: MessageHeaderFlag, msg: T) -> Option<Vec<ProtocolMessage>>{
-        Some(
-            vec!(ProtocolMessage::Core_ProtocolException(ProtocolException::default_with_params(Some(eunsupported_protocol()))))
-        )
-        
+pub trait EtpMessageHandler<T: ETPMetadata> {
+    fn handle(header: MessageHeaderFlag, msg: T) -> Option<Vec<ProtocolMessage>> {
+        Some(vec![ProtocolMessage::Core_ProtocolException(
+            ProtocolException::default_with_params(Some(eunsupported_protocol())),
+        )])
     }
 }
-

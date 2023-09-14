@@ -8,11 +8,10 @@ use etptypes::energistics::etp::v12::datatypes::server_capabilities::ServerCapab
 
 use crate::credentials::ClientInfo;
 
-enum CommunicationProtocol{
+enum CommunicationProtocol {
     /*
     ETP Specification, Section 2 - ETP Published Protocols
     */
-
     // Creates and manages ETP sessions.
     Core = 0,
 
@@ -68,28 +67,28 @@ enum CommunicationProtocol{
     WitsmlSoap = 2000,
 }
 
-enum ConnectionType{
-	Client = 0,
-	Server = 1,
+enum ConnectionType {
+    Client = 0,
+    Server = 1,
 }
 
-struct EtpConnection{
-	pub client_info: Option<ClientInfo>,
-	pub connection_type: ConnectionType,
-	// pub message_cache: HashMap<i64, ETPMetadata>,
+struct EtpConnection {
+    pub client_info: Option<ClientInfo>,
+    pub connection_type: ConnectionType,
+    // pub message_cache: HashMap<i64, ETPMetadata>,
     // pub error_cache: HashMap<i64, ETPMetadata>,
     pub capabilities: Option<ServerCapabilities>,
 
-	message_id: i64,
+    message_id: i64,
 }
 
-impl EtpConnection{
-	fn consume_message_id(mut self) -> i64{
-		self.message_id = self.message_id + 1;
-		self.message_id - 1
-	}
+impl EtpConnection {
+    fn consume_message_id(mut self) -> i64 {
+        self.message_id = self.message_id + 1;
+        self.message_id - 1
+    }
 
     /*fn send(mut self, msg: Option<>, err: Option<>) -> Vec<8>{
-        
+
     }*/
 }
