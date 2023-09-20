@@ -5,12 +5,21 @@
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 
-use etptypes::energistics::etp::v12::datatypes::message_header::MessageHeader;
-use etptypes::energistics::etp::v12::datatypes::message_header_extension::MessageHeaderExtension;
 use etptypes::energistics::etp::v12::protocol::core::protocol_exception::ProtocolException;
 use etptypes::error::eunsupported_protocol;
+use etptypes::helpers::AvroDeserializable;
+use etptypes::helpers::AvroSerializable;
+use etptypes::protocols::{avro_decode, ProtocolMessage};
+
+use etptypes::energistics::etp::v12::datatypes::message_header::MessageHeader;
+use etptypes::energistics::etp::v12::datatypes::message_header_extension::MessageHeaderExtension;
 use etptypes::helpers::ETPMetadata;
-use etptypes::protocols::ProtocolMessage;
+
+pub type BytesEncodedMessage = Vec<u8>;
+
+fn get_type_name<T>(_: &T) -> String {
+    format!("{}", std::any::type_name::<T>())
+}
 
 pub const MSG_FLAG_NONE: i32 = 0x00;
 pub const MSG_FLAG_MULTIPART: i32 = 0x01;
@@ -87,31 +96,72 @@ impl MessageHeaderFlag {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, serde::Deserialize, serde::Serialize)]
-pub struct Message<T> {
-    header: MessageHeader,
-    header_extension: Option<MessageHeaderExtension>,
-    body: T,
-}
-
-impl<T> Message<T> {
-    /*pub fn encode(&self) -> Option<Vec<8>>{
-        None
-    }*/
-
-    fn correlation_id(&self) -> i64 {
-        if self.header.correlation_id != 0 {
-            self.header.correlation_id
-        } else {
-            self.header.message_id
-        }
-    }
-}
-
-pub trait EtpMessageHandler<T: ETPMetadata> {
-    fn handle(header: MessageHeaderFlag, msg: T) -> Option<Vec<ProtocolMessage>> {
+pub trait EtpMessageHandler {
+    fn handle(
+        &mut self,
+        header: MessageHeaderFlag,
+        msg: &ProtocolMessage,
+    ) -> Option<Vec<ProtocolMessage>> {
         Some(vec![ProtocolMessage::Core_ProtocolException(
             ProtocolException::default_with_params(Some(eunsupported_protocol())),
         )])
     }
+}
+
+#[derive(Debug, PartialEq, Clone, serde::Deserialize, serde::Serialize)]
+pub struct Message {
+    pub header: MessageHeader,
+    pub header_extension: Option<MessageHeaderExtension>,
+    pub body: ProtocolMessage,
+}
+
+impl Message {
+    pub fn create_message(
+        correlation_id: i64,
+        message_id: i64,
+        message_flags: i32,
+        body: ProtocolMessage,
+        header_extension: Option<MessageHeaderExtension>,
+    ) -> Message {
+        Message {
+            header: MessageHeader {
+                protocol: body.protocol(),
+                message_type: body.message_type(),
+                correlation_id,
+                message_id,
+                message_flags,
+            },
+            header_extension,
+            body,
+        }
+    }
+
+    pub fn encode_message(&self) -> Option<Vec<BytesEncodedMessage>> {
+        let correlation_id = if self.header.correlation_id != 0 {
+            self.header.correlation_id
+        } else {
+            self.header.message_id
+        };
+
+        let message_type = get_type_name(&self.body);
+        let is_a_request = message_type.ends_with("Response");
+
+        let encoded_header = self.header.avro_serialize().unwrap();
+        let encoded_body = self.body.avro_serialize().unwrap();
+        println!("Encoded header size : {}", &encoded_header.len());
+
+        let first_encoded = vec![encoded_header, encoded_body].concat();
+
+        Some(vec![first_encoded])
+    }
+}
+
+pub fn decode_message(encoded: Vec<u8>) -> (MessageHeader, Option<ProtocolMessage>) {
+    let mut encoded_slice = &encoded[0..5];
+    let mut encoded_mb = &encoded[5..];
+    let mh = MessageHeader::avro_deserialize(&mut encoded_slice).unwrap();
+    let mb = avro_decode(&mh, &mut encoded_mb);
+    println!("{:?}", mh);
+    println!("{:?}", mb);
+    (mh, mb)
 }
