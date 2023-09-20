@@ -10,9 +10,9 @@ checksum = "aae1277d39aeec15cb388266ecc24b11c80469deae6067e17a1a7aa9e5c1f234"
 
 [[package]]
 name = "aho-corasick"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f2135563fb5c609d2b2b87c1e8ce7bc41b0b45430fa9661f457981503dd5bf0"
+checksum = "ea5d730647d4fadd988536d06fecce94b7b4f2a7efdae548f1cf4b63205518ab"
 dependencies = [
  "memchr",
 ]
@@ -143,7 +143,7 @@ dependencies = [
 [[package]]
 name = "etptypes"
 version = "1.0.1+1.2"
-source = "git+https://github.com/geosiris-technologies/etptypes-rs/?branch=avro-serialization#c0ead1302994cbd53225c192bdf7f37fa92768a8"
+source = "git+https://github.com/geosiris-technologies/etptypes-rs/?branch=avro-serialization#06152aa8954157517cba37b8dbd3359f9a60fc44"
 dependencies = [
  "apache-avro",
  "bytes",
