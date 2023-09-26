@@ -3,12 +3,12 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-use crate::message::decode_message;
-use crate::message::BytesEncodedMessage;
-use crate::message::EtpMessageHandler;
-use crate::message::Message;
-use crate::message::MessageHeaderFlag;
+use crate::message::{
+    decode_message, BytesEncodedMessage, EtpMessageHandler, Message, MessageHeaderFlag,
+    MSG_FLAG_FINAL,
+};
 use etptypes::energistics::etp::v12::datatypes::message_header::MessageHeader;
+use etptypes::energistics::etp::v12::datatypes::message_header_extension::MessageHeaderExtension;
 use etptypes::energistics::etp::v12::datatypes::server_capabilities::ServerCapabilities;
 use etptypes::energistics::etp::v12::protocol::core::acknowledge::Acknowledge;
 use etptypes::energistics::etp::v12::protocol::core::close_session::CloseSession;
@@ -130,11 +130,37 @@ impl EtpConnection {
         self.message_id - 1
     }
 
-    /*fn send(mut self, msg: Option<>, err: Option<>) -> Vec<8>{
+    pub fn send_encoded(
+        &mut self,
+        msg: ProtocolMessage,
+        correlation_id: Option<i64>,
+        flags: Option<MessageHeaderFlag>,
+        header_extension: Option<MessageHeaderExtension>,
+    ) -> Option<Vec<BytesEncodedMessage>> {
+        self.send(msg, correlation_id, flags, header_extension)
+            .encode_message()
+    }
 
-    }*/
+    pub fn send(
+        &mut self,
+        msg: ProtocolMessage,
+        correlation_id: Option<i64>,
+        flags: Option<MessageHeaderFlag>,
+        header_extension: Option<MessageHeaderExtension>,
+    ) -> Message {
+        Message::create_message(
+            correlation_id.unwrap_or(0),
+            self.consume_message_id(),
+            match flags {
+                Some(f) => f.as_i32(),
+                None => MSG_FLAG_FINAL,
+            },
+            msg,
+            header_extension,
+        )
+    }
 
-    pub fn handle_encoded(&mut self, encoded: BytesEncodedMessage) -> Option<Vec<Message>> {
+    pub fn handle_encoded(&mut self, encoded: &BytesEncodedMessage) -> Option<Vec<Message>> {
         let (mh, mb): (MessageHeader, Option<ProtocolMessage>) = decode_message(encoded);
         self.handle_message(&mh, &mb.unwrap())
     }

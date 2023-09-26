@@ -43,14 +43,7 @@ pub struct MessageHeaderFlag {
 impl Default for MessageHeaderFlag {
     /* Protocol 0, MessageType : 2 */
     fn default() -> MessageHeaderFlag {
-        MessageHeaderFlag {
-            msg_final: false,
-            msg_multipart: false,
-            msg_compressed: false,
-            msg_no_data: false,
-            msg_aknowledge: false,
-            msg_has_header_extension: false,
-        }
+        MessageHeaderFlag::parse(MSG_FLAG_FINAL)
     }
 }
 
@@ -156,7 +149,7 @@ impl Message {
     }
 }
 
-pub fn decode_message(encoded: BytesEncodedMessage) -> (MessageHeader, Option<ProtocolMessage>) {
+pub fn decode_message(encoded: &BytesEncodedMessage) -> (MessageHeader, Option<ProtocolMessage>) {
     let mut encoded_slice = &encoded[0..5];
     let mut encoded_mb = &encoded[5..];
     let mh = MessageHeader::avro_deserialize(&mut encoded_slice).unwrap();

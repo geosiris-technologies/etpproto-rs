@@ -201,7 +201,7 @@ fn main() {
     for m in msg_encoded.iter() {
         //let mut slice = m.as_slice();
         //println!("{:?}", slice);
-        decode_message(m.to_vec());
+        decode_message(&m.to_vec());
     }
 
     let mut connection: EtpConnection = EtpConnection::new(

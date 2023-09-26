@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 #![allow(dead_code)]
 
-use etptypes::error::enosupportedprotocols;
-use etptypes::helpers::Role;
-use etptypes::energistics::etp::v12::protocol::core::protocol_exception::ProtocolException;
 use etptypes::energistics::etp::v12::datatypes::data_value::DataValue;
 use etptypes::energistics::etp::v12::datatypes::data_value::UnionBooleanIntLongFloatDoubleStringArrayOfBooleanArrayOfNullableBooleanArrayOfIntArrayOfNullableIntArrayOfLongArrayOfNullableLongArrayOfFloatArrayOfDoubleArrayOfStringArrayOfBytesBytesAnySparseArray as U_TYPE;
 use etptypes::energistics::etp::v12::datatypes::endpoint_capability_kind::EndpointCapabilityKind;
 use etptypes::energistics::etp::v12::datatypes::server_capabilities::ServerCapabilities;
 use etptypes::energistics::etp::v12::datatypes::supported_data_object::SupportedDataObject;
 use etptypes::energistics::etp::v12::datatypes::supported_protocol::SupportedProtocol;
+use etptypes::energistics::etp::v12::protocol::core::protocol_exception::ProtocolException;
+use etptypes::error::enosupportedprotocols;
+use etptypes::helpers::Role;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
@@ -228,29 +228,32 @@ pub fn negotiate_supported_protocol(
 ) -> Vec<SupportedProtocol> {
     let nego = vec![];
 
-    for sp_me in cap_me{
-        for sp_target in cap_target{
+    for sp_me in cap_me {
+        for sp_target in cap_target {
             if sp_me.protocol == sp_target.protocol
-            && sp_me.protocol_version == sp_target.protocol_version {
-            }
+                && sp_me.protocol_version == sp_target.protocol_version
+            {}
         }
     }
     nego
 }
 
-pub fn validate_supported_protocol(cap: &Vec<SupportedProtocol>) -> Option<ProtocolException>{
-    let mut exception : ProtocolException = ProtocolException::default_with_params(None);
+pub fn validate_supported_protocol(cap: &Vec<SupportedProtocol>) -> Option<ProtocolException> {
+    let mut exception: ProtocolException = ProtocolException::default_with_params(None);
 
     let mut role_nullable: Option<Role> = None;
 
     for sp_cap in cap {
         let current_role_nullable = Role::from_str(&sp_cap.role);
-        if let Ok(current_role) = current_role_nullable{
-            if let Some(role) = &role_nullable{
-                if role != &current_role{
-                    exception.errors.insert(format!("{}", exception.errors.len()), enosupportedprotocols());
+        if let Ok(current_role) = current_role_nullable {
+            if let Some(role) = &role_nullable {
+                if role != &current_role {
+                    exception.errors.insert(
+                        format!("{}", exception.errors.len()),
+                        enosupportedprotocols(),
+                    );
                 }
-            }else{
+            } else {
                 role_nullable = Some(current_role.clone());
             }
         }
@@ -258,7 +261,7 @@ pub fn validate_supported_protocol(cap: &Vec<SupportedProtocol>) -> Option<Proto
 
     if exception.errors.len() > 0 {
         Some(exception)
-    }else{
+    } else {
         None
     }
 }

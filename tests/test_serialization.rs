@@ -8,11 +8,15 @@ use etptypes::energistics::etp::v12::datatypes::message_header::MessageHeader;
 use etptypes::energistics::etp::v12::datatypes::protocol::Protocol;
 use etptypes::energistics::etp::v12::datatypes::supported_protocol::SupportedProtocol;
 use etptypes::energistics::etp::v12::datatypes::uuid::random_uuid;
-use etptypes::energistics::etp::v12::protocol::core::ping::Ping;
+use etptypes::energistics::etp::v12::protocol::core::protocol_exception::ProtocolException;
+use etptypes::error::eunsupported_protocol;
+use etptypes::helpers::AvroDeserializable;
+use etptypes::helpers::AvroSerializable;
+
 use etptypes::energistics::etp::v12::protocol::core::pong::Pong;
 use etptypes::energistics::etp::v12::protocol::core::request_session::RequestSession;
 use etptypes::helpers::time_to_etp;
-use etptypes::helpers::Schemable;
+
 use etptypes::helpers::ETP12VERSION;
 use etptypes::protocols::ProtocolMessage;
 use std::collections::HashMap;
@@ -21,18 +25,22 @@ use std::time::SystemTime;
 /* HANDLER */
 struct MyHandler {}
 
-impl EtpMessageHandler<Ping> for MyHandler {
-    fn handle(header: MessageHeaderFlag, msg: Ping) -> Option<Vec<ProtocolMessage>> {
-        Some(vec![ProtocolMessage::Core_Pong(Pong::default())])
+impl EtpMessageHandler for MyHandler {
+    fn handle(
+        &mut self,
+        header: MessageHeaderFlag,
+        msg: &ProtocolMessage,
+    ) -> Option<Vec<ProtocolMessage>> {
+        println!("{:?} <=== ", msg);
+        match msg {
+            ProtocolMessage::Core_Ping(ping) => Some(vec![Pong::default().as_protocol_message()]),
+            ProtocolMessage::Core_Pong(pong) => None,
+            _ => Some(vec![ProtocolMessage::Core_ProtocolException(
+                ProtocolException::default_with_params(Some(eunsupported_protocol())),
+            )]),
+        }
     }
 }
-
-impl EtpMessageHandler<Pong> for MyHandler {
-    fn handle(header: MessageHeaderFlag, msg: Pong) -> Option<Vec<ProtocolMessage>> {
-        Some(vec![ProtocolMessage::Core_Pong(Pong::default())])
-    }
-}
-
 /* OBJECTS */
 
 fn get_request_session() -> RequestSession {
