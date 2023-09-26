@@ -5,6 +5,7 @@
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 
+use std::collections::HashMap;
 use etptypes::energistics::etp::v12::protocol::core::protocol_exception::ProtocolException;
 use etptypes::error::eunsupported_protocol;
 use etptypes::helpers::AvroDeserializable;
@@ -96,7 +97,7 @@ pub trait EtpMessageHandler {
         msg: &ProtocolMessage,
     ) -> Option<Vec<ProtocolMessage>> {
         Some(vec![ProtocolMessage::Core_ProtocolException(
-            ProtocolException::default_with_params(Some(eunsupported_protocol())),
+            ProtocolException{error: Some(eunsupported_protocol()), errors: HashMap::new()},
         )])
     }
 }

@@ -107,7 +107,7 @@ impl EtpConnection {
         client_info: Option<ClientInfo>,
         connection_type: ConnectionType,
         capabilities: Option<ServerCapabilities>,
-        msg_handler: impl EtpMessageHandler + 'static,
+        msg_handler: Box<dyn EtpMessageHandler> ,
     ) -> Self {
         let message_id = match connection_type {
             ConnectionType::Server => 1,
@@ -120,7 +120,7 @@ impl EtpConnection {
             is_connected: false,
             message_id,
             message_cache: HashMap::new(),
-            msg_handler: Box::new(msg_handler),
+            msg_handler: msg_handler,
         }
     }
 
@@ -195,9 +195,7 @@ impl EtpConnection {
                     */
                     if let ProtocolMessage::Core_RequestSession(pm_rq) = mb {
                         println!("{:?}", pm_rq.application_name);
-                        if let Some(vvv) = self
-                            .msg_handler
-                            .handle(MessageHeaderFlag::parse(mh.message_flags), mb)
+                        if let Some(vvv) = self.msg_handler.handle(MessageHeaderFlag::parse(mh.message_flags), mb)
                         {
                             for handled in vvv {
                                 if let ProtocolMessage::Core_OpenSession(_) = &handled {
@@ -231,13 +229,12 @@ impl EtpConnection {
                     / /___/ / /  __/ / / / /_   / ____/ /_/ / /  / /_
                     \____/_/_/\___/_/ /_/\__/  /_/    \__,_/_/   \__/
                     */
-                    if let ProtocolMessage::Core_OpenSession(pm_os) = mb {
+                    if let ProtocolMessage::Core_OpenSession(_pm_os) = mb {
+                        /* TODO: prendre les parametre de capabilities de OpenSession pour les mettre en param de la connexion */
                         self.is_connected = true;
                         /*println!("{:?}", pm_os.application_name);*/
                         //self.capabilities = ServerCapabilities
-                        if let Some(vvv) = self
-                            .msg_handler
-                            .handle(MessageHeaderFlag::parse(mh.message_flags), mb)
+                        if let Some(vvv) = self.msg_handler.handle(MessageHeaderFlag::parse(mh.message_flags), mb)
                         {
                             for handled in vvv {
                                 if let ProtocolMessage::Core_OpenSession(_) = &handled {
@@ -284,9 +281,7 @@ impl EtpConnection {
                     _ => {}
                 };
             } else {
-                if let Some(vvv) = self
-                    .msg_handler
-                    .handle(MessageHeaderFlag::parse(mh.message_flags), mb)
+                if let Some(vvv) = self.msg_handler.handle(MessageHeaderFlag::parse(mh.message_flags), mb)
                 {
                     for handled in vvv {
                         if let ProtocolMessage::Core_OpenSession(_) = &handled {

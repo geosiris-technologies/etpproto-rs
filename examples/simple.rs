@@ -204,6 +204,7 @@ fn main() {
         decode_message(&m.to_vec());
     }
 
+
     let mut connection: EtpConnection = EtpConnection::new(
         Some(create_client_info(None, None, None)),
         ConnectionType::Server,
@@ -223,7 +224,7 @@ fn main() {
             supported_protocols: vec![],
             endpoint_capabilities: ma,
         }),
-        MyHandler {},
+        Box::new(MyHandler{}),
     );
 
     /* Messages */
