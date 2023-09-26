@@ -156,7 +156,7 @@ impl Message {
     }
 }
 
-pub fn decode_message(encoded: Vec<u8>) -> (MessageHeader, Option<ProtocolMessage>) {
+pub fn decode_message(encoded: BytesEncodedMessage) -> (MessageHeader, Option<ProtocolMessage>) {
     let mut encoded_slice = &encoded[0..5];
     let mut encoded_mb = &encoded[5..];
     let mh = MessageHeader::avro_deserialize(&mut encoded_slice).unwrap();

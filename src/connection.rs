@@ -125,6 +125,7 @@ impl EtpConnection {
     }
 
     fn consume_message_id(&mut self) -> i64 {
+        /* verifier si le client / server ne doit pas toujours envoyer des messages pair/impairs*/
         self.message_id = self.message_id + 1;
         self.message_id - 1
     }
