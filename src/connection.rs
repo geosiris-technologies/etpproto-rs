@@ -4,7 +4,7 @@
 #![allow(unused_imports)]
 
 use crate::message::{
-    decode_message, BytesEncodedMessage, EtpMessageHandler, Message, MessageHeaderFlag,
+    decode_message, BytesEncodedMessage, EtpMessageHandler, EtpMessage, MessageHeaderFlag,
     MSG_FLAG_FINAL,
 };
 use etptypes::energistics::etp::v12::datatypes::message_header::MessageHeader;
@@ -147,8 +147,8 @@ impl EtpConnection {
         correlation_id: Option<i64>,
         flags: Option<MessageHeaderFlag>,
         header_extension: Option<MessageHeaderExtension>,
-    ) -> Message {
-        Message::create_message(
+    ) -> EtpMessage {
+        EtpMessage::create_message(
             correlation_id.unwrap_or(0),
             self.consume_message_id(),
             match flags {
@@ -160,7 +160,7 @@ impl EtpConnection {
         )
     }
 
-    pub fn handle_encoded(&mut self, encoded: &BytesEncodedMessage) -> Option<Vec<Message>> {
+    pub fn handle_encoded(&mut self, encoded: &BytesEncodedMessage) -> Option<Vec<EtpMessage>> {
         let (mh, mb): (MessageHeader, Option<ProtocolMessage>) = decode_message(encoded);
         self.handle_message(&mh, &mb.unwrap())
     }
@@ -169,12 +169,12 @@ impl EtpConnection {
         &mut self,
         mh: &MessageHeader,
         mb: &ProtocolMessage,
-    ) -> Option<Vec<Message>> {
+    ) -> Option<Vec<EtpMessage>> {
         let mut answer = vec![];
         let mh_flags = MessageHeaderFlag::parse(mh.message_flags);
 
         if mh_flags.msg_aknowledge {
-            answer.push(Message::create_message(
+            answer.push(EtpMessage::create_message(
                 mh.message_id,
                 self.consume_message_id(),
                 MessageHeaderFlag::default().as_i32(),
@@ -201,7 +201,7 @@ impl EtpConnection {
                                 if let ProtocolMessage::Core_OpenSession(_) = &handled {
                                     self.is_connected = true;
                                 }
-                                answer.push(Message::create_message(
+                                answer.push(EtpMessage::create_message(
                                     mh.message_id,
                                     self.consume_message_id(),
                                     MessageHeaderFlag::default().as_i32(),
@@ -211,7 +211,7 @@ impl EtpConnection {
                             }
                         }
                     } else {
-                        answer.push(Message::create_message(
+                        answer.push(EtpMessage::create_message(
                             mh.message_id,
                             self.consume_message_id(),
                             MessageHeaderFlag::default().as_i32(),
@@ -240,7 +240,7 @@ impl EtpConnection {
                                 if let ProtocolMessage::Core_OpenSession(_) = &handled {
                                     self.is_connected = true;
                                 }
-                                answer.push(Message::create_message(
+                                answer.push(EtpMessage::create_message(
                                     mh.message_id,
                                     self.consume_message_id(),
                                     MessageHeaderFlag::default().as_i32(),
@@ -267,7 +267,7 @@ impl EtpConnection {
                 self.capabilities = None;
                 match self.connection_type {
                     ConnectionType::Server => {
-                        answer.push(Message::create_message(
+                        answer.push(EtpMessage::create_message(
                             mh.message_id,
                             self.consume_message_id(),
                             MessageHeaderFlag::default().as_i32(),
@@ -287,7 +287,7 @@ impl EtpConnection {
                         if let ProtocolMessage::Core_OpenSession(_) = &handled {
                             self.is_connected = true;
                         }
-                        answer.push(Message::create_message(
+                        answer.push(EtpMessage::create_message(
                             mh.message_id,
                             self.consume_message_id(),
                             MessageHeaderFlag::default().as_i32(),

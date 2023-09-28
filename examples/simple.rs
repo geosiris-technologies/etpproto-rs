@@ -7,7 +7,7 @@ use etpproto::capabilities_utils::DataObjectCapabilities;
 use etpproto::connection::{ConnectionType, EtpConnection};
 use etpproto::credentials::create_client_info;
 use etpproto::message::{
-    decode_message, EtpMessageHandler, Message, MessageHeaderFlag, MSG_FLAG_FINAL,
+    decode_message, EtpMessageHandler, EtpMessage, MessageHeaderFlag, MSG_FLAG_FINAL,
 };
 
 use etptypes::energistics::etp::v12::datatypes::contact::Contact;
@@ -186,7 +186,7 @@ fn main() {
 
     /*test();*/
 
-    let msg = Message::create_message(
+    let msg = EtpMessage::create_message(
         1,
         2,
         MSG_FLAG_FINAL,

@@ -103,21 +103,21 @@ pub trait EtpMessageHandler {
 }
 
 #[derive(Debug, PartialEq, Clone, serde::Deserialize, serde::Serialize)]
-pub struct Message {
+pub struct EtpMessage {
     pub header: MessageHeader,
     pub header_extension: Option<MessageHeaderExtension>,
     pub body: ProtocolMessage,
 }
 
-impl Message {
+impl EtpMessage {
     pub fn create_message(
         correlation_id: i64,
         message_id: i64,
         message_flags: i32,
         body: ProtocolMessage,
         header_extension: Option<MessageHeaderExtension>,
-    ) -> Message {
-        Message {
+    ) -> EtpMessage {
+        EtpMessage {
             header: MessageHeader {
                 protocol: body.protocol(),
                 message_type: body.message_type(),
@@ -155,7 +155,5 @@ pub fn decode_message(encoded: &BytesEncodedMessage) -> (MessageHeader, Option<P
     let mut encoded_mb = &encoded[5..];
     let mh = MessageHeader::avro_deserialize(&mut encoded_slice).unwrap();
     let mb = avro_decode(&mh, &mut encoded_mb);
-    println!("{:?}", mh);
-    println!("{:?}", mb);
     (mh, mb)
 }
