@@ -5,16 +5,20 @@
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 
-use std::collections::HashMap;
+use flate2::bufread::GzDecoder;
+use std::io::Read;
+use etptypes::energistics::etp::v12::datatypes::message_header::MessageHeader;
+use etptypes::energistics::etp::v12::datatypes::message_header_extension::MessageHeaderExtension;
 use etptypes::energistics::etp::v12::protocol::core::protocol_exception::ProtocolException;
 use etptypes::error::eunsupported_protocol;
 use etptypes::helpers::AvroDeserializable;
 use etptypes::helpers::AvroSerializable;
+use etptypes::helpers::ETPMetadata;
 use etptypes::protocols::{avro_decode, ProtocolMessage};
 
-use etptypes::energistics::etp::v12::datatypes::message_header::MessageHeader;
-use etptypes::energistics::etp::v12::datatypes::message_header_extension::MessageHeaderExtension;
-use etptypes::helpers::ETPMetadata;
+use flate2::bufread::GzEncoder;
+use flate2::Compression;
+use std::collections::HashMap;
 
 pub type BytesEncodedMessage = Vec<u8>;
 
@@ -106,7 +110,7 @@ pub trait EtpMessageHandler {
 pub struct EtpMessage {
     pub header: MessageHeader,
     pub header_extension: Option<MessageHeaderExtension>,
-    pub body: ProtocolMessage,
+    pub body: Option<ProtocolMessage>,
 }
 
 impl EtpMessage {
@@ -126,7 +130,7 @@ impl EtpMessage {
                 message_flags,
             },
             header_extension,
-            body,
+            body: Some(body),
         }
     }
 
@@ -140,20 +144,88 @@ impl EtpMessage {
         let message_type = get_type_name(&self.body);
         let is_a_request = message_type.ends_with("Response");
 
-        let encoded_header = self.header.avro_serialize().unwrap();
-        let encoded_body = self.body.avro_serialize().unwrap();
-        println!("Encoded header size : {}", &encoded_header.len());
+        /* Check body compression */
+        let mut compress = self.header.message_flags & MSG_FLAG_COMPRESSED != 0;
+        println!("===> {:?}", self.header);
+        if self.header.message_type == 1000 || self.header.message_type == 1001 || self.header.protocol == 0 {
+            compress = false;
+        }
 
+        /* Encoding body */
+        let mut encoded_body = match &self.body{
+            Some(b) => b.avro_serialize().unwrap(),
+            None => vec![]
+        };
+
+        if compress {
+            //println!("Body compression");
+            let mut gz = GzEncoder::new(encoded_body.as_slice(), Compression::default());
+            let mut buffer = Vec::new();
+            match gz.read_to_end(&mut buffer){
+                Ok(_) => encoded_body = buffer,
+                Err(_) => compress = false
+            }
+        }
+
+
+        /* Encoding header */
+        let mut new_header = self.header.clone();
+        let mut header_flags = MessageHeaderFlag::parse(self.header.message_flags);
+        header_flags.msg_compressed = compress;
+        new_header.message_flags = header_flags.as_i32();
+        let encoded_header = new_header.avro_serialize().unwrap();
+
+
+        println!("Encoded header size : {}", &encoded_header.len());
         let first_encoded = vec![encoded_header, encoded_body].concat();
 
         Some(vec![first_encoded])
     }
 }
 
-pub fn decode_message(encoded: &BytesEncodedMessage) -> (MessageHeader, Option<ProtocolMessage>) {
+pub fn decode_message(encoded: &BytesEncodedMessage) -> EtpMessage {
     let mut encoded_slice = &encoded[0..5];
     let mut encoded_mb = &encoded[5..];
     let mh = MessageHeader::avro_deserialize(&mut encoded_slice).unwrap();
+
+    let mut compress = mh.message_flags & MSG_FLAG_COMPRESSED != 0;
+    if mh.message_type == 1000 || mh.message_type == 1001 || mh.protocol == 0 {
+        compress = false;
+    }
+
+    let mut s = vec![];
+    if compress {
+        let mut gz = GzDecoder::new(encoded_mb);
+        match gz.read_to_end(&mut s){
+            Ok(_) => {encoded_mb = &s;},
+            Err(_) => return EtpMessage{header: mh, header_extension: None, body: None}
+        }
+    }
+
     let mb = avro_decode(&mh, &mut encoded_mb);
-    (mh, mb)
+    EtpMessage{
+        header: mh,
+        header_extension: None,
+        body: mb
+    }
+}
+
+pub fn decode_multipart_message(msgs: &Vec<&BytesEncodedMessage>) -> Option<EtpMessage>{
+    //grr.resources.sort_by(|a, b| a.uri.partial_cmp(&b.uri).unwrap());
+
+    let mut msg_pairs = msgs.into_iter().map(
+        |bytes| {
+            let mut encoded_slice = &bytes[0..5];
+            let mh = MessageHeader::avro_deserialize(&mut encoded_slice).unwrap();
+            (mh, (&bytes[5..]).to_vec())
+        }
+    ).collect::<Vec<(MessageHeader, BytesEncodedMessage)>>();
+
+    msg_pairs.sort_by(|a, b| a.0.message_id.partial_cmp(&b.0.message_id).unwrap());
+
+    // TODO : verif pas de trou ??
+    for msg in msg_pairs {
+
+    }
+    None
 }

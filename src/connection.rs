@@ -161,8 +161,8 @@ impl EtpConnection {
     }
 
     pub fn handle_encoded(&mut self, encoded: &BytesEncodedMessage) -> Option<Vec<EtpMessage>> {
-        let (mh, mb): (MessageHeader, Option<ProtocolMessage>) = decode_message(encoded);
-        self.handle_message(&mh, &mb.unwrap())
+        let msg: EtpMessage = decode_message(encoded);
+        self.handle_message(&msg.header, &msg.body.unwrap())
     }
 
     pub fn handle_message(

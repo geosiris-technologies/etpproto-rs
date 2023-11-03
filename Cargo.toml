@@ -20,6 +20,7 @@ repository = "https://github.com/geosiris-technologies/etpproto-rs"
 [dependencies]
 # etptypes = "1.0.0"
 etptypes = { git = "https://github.com/geosiris-technologies/etptypes-rs/", branch = "avro-serialization"}
+flate2 = "1.0.27"
 fmt = "0.1.0"
 regex = "1.9.5"
 serde = { version = "1.0", features = ["derive"] }
