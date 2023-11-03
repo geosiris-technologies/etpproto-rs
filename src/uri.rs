@@ -43,11 +43,11 @@ pub struct Uri {
 }
 
 impl Uri {
-    pub fn parse(uri: &str) -> Uri {
+    pub fn parse(uri: &str) -> Result<Uri, String> {
         let re = Regex::new(&canonical_data_object_uris()).unwrap();
         let caps_uw = re.captures(uri);
         match caps_uw {
-            Some(caps) => Uri {
+            Some(caps) => Ok(Uri {
                 raw: uri.to_string(),
                 dataspace: match caps.name("dataspace") {
                     Some(w) => Some(w.as_str().to_string()),
@@ -96,21 +96,8 @@ impl Uri {
                     Some(w) => Some(w.as_str().to_string()),
                     None => None,
                 },
-            },
-            None => Uri {
-                raw: uri.to_string(),
-                dataspace: None,
-                domain: None,
-                domain_version: None,
-                object_type: None,
-                object_uuid: None,
-                object_version: None,
-                collection_domain: None,
-                collection_domain_version: None,
-                collection_type: None,
-                sub_path: None,
-                query: None,
-            },
+            }),
+            None => Err(format!("{:?} is not a valid etp uri", uri)),
         }
     }
 }
